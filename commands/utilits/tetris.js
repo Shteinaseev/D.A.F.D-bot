@@ -130,7 +130,7 @@ module.exports = {
         }
 
         // Вызываем функцию обновления позиции тетрамино с интервалом в 5 секунд
-        setInterval(updateTetrominoPosition, fallSpeed);
+        const interval = setInterval(updateTetrominoPosition, fallSpeed);
 
         const embedDescription = createGameBoardWithTetromino(gameBoard, randomTetromino, initialPosition, interval);
 
