@@ -77,15 +77,6 @@ module.exports = {
         const randomTetrominoKey = tetrominoKeys[Math.floor(Math.random() * tetrominoKeys.length)];
         const randomTetromino = tetrominos[randomTetrominoKey];
 
-        // Выбор и начальные координаты тетрамино
-        const selectedTetromino = [
-            [eSE, eSE, eSE, eSE],
-            [aBe, aBe, aBe, aBe],
-            [eSE, eSE, eSE, eSE],
-            [eSE, eSE, eSE, eSE]
-        ];
-
-
         const initialPosition = [0, 3]; // Начальные координаты тетрамино на игровом поле
 
         // Функция для создания строки с игровым полем и тетрамино
@@ -105,25 +96,41 @@ module.exports = {
             }
             return result;
         }
+        
+        let currentPosition = initialPosition;
 
-        function moveTetrominoDown(gameBoard, tetromino, position) {
-            if (canMoveDown(gameBoard, tetromino, position)) {
-                eraseTetromino(gameBoard, tetromino, position);
-                position[0]++;
-                placeTetromino(gameBoard, tetromino, position);
-                return true; // Тетромино успешно опущено
-            } else {
-                return false; // Тетромино не может быть опущено
-
+        function checkCollision(gameBoard, tetromino, position) {
+            for (let y = 0; y < tetromino.length; y++) {
+                for (let x = 0; x < tetromino[y].length; x++) {
+                    if (tetromino[y][x] && (gameBoard[position[1] + y] && gameBoard[position[1] + y][position[0] + x]) !== 0) {
+                        // Если позиция тетромино пересекается с занятыми ячейками на игровом поле, есть коллизия.
+                        return true;
+                    }
+                }
             }
-        }   
+            return false;
+        }
+        
 
-        function canMoveDown(gameBoard, tetromino, position) {
-            if (moveTetrominoDown(gameBoard, tetromino, position)) {
-                const embedDescription = createGameBoardWithTetromino(gameBoard, randomTetromino, initialPosition);
+        function updateTetrominoPosition() {
+            currentPosition[0]++; // Увеличиваем позицию по вертикали
+        
+            // Проверяем не достигло ли тетромино нижней границы
+            if (!checkCollision(gameBoard, randomTetromino, currentPosition)) {
+                // Если нет коллизии, обновляем описание встроенного сообщения и отправляем его
+                const embedDescription = createGameBoardWithTetromino(gameBoard, randomTetromino, currentPosition);
+                interaction.editReply({ embeds: [{ description: embedDescription, color: 0x0099FF }] });
+            } else {
+                // В противном случае останавливаем функцию, так как тетромино достигло нижней границы
+                clearInterval(interval); 
             }
         }
-        const embedDescription = createGameBoardWithTetromino(gameBoard, randomTetromino, initialPosition);
+        
+        // Устанавливаем интервал для обновления позиции каждые, например, 1 секунду
+        const interval = setInterval(updateTetrominoPosition, 1000);
+
+
+        const embedDescription = createGameBoardWithTetromino(gameBoard, randomTetromino, initialPosition, interval);
 
         await interaction.reply({embeds: [{ description: embedDescription, color: 0x0099FF }] });
     },
