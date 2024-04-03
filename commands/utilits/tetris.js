@@ -111,7 +111,10 @@ module.exports = {
             return false;
         }
         
+        // Определяем скорость падения в миллисекундах (5 секунд)
+        const fallSpeed = 5000;
 
+        
         function updateTetrominoPosition() {
             currentPosition[0]++; // Увеличиваем позицию по вертикали
         
@@ -125,10 +128,9 @@ module.exports = {
                 clearInterval(interval); 
             }
         }
-        
-        // Устанавливаем интервал для обновления позиции каждые, например, 1 секунду
-        const interval = setInterval(updateTetrominoPosition, 1000);
 
+        // Вызываем функцию обновления позиции тетрамино с интервалом в 5 секунд
+        setInterval(updateTetrominoPosition, fallSpeed);
 
         const embedDescription = createGameBoardWithTetromino(gameBoard, randomTetromino, initialPosition, interval);
 
