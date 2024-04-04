@@ -98,12 +98,12 @@ module.exports = {
                 for (let j = 0; j < tetromino.shape[i].length; j++) {
                     if (tetromino.shape[i][j]!== 0) {
                         if (gameBoard[tetromino.position.y + i][tetromino.position.x + j]!== 0) {
-                            return true; // Обнаружено пересечение
+                            return true;
                         }
                     }
                 }
             }
-            return false; // Нет пересечений
+            return false; 
         }
 
 
@@ -115,7 +115,7 @@ module.exports = {
             displayGameOverMessage(); // Пример отображения сообщения о поражении
         }
 
-        function createNextTetromino(tetromino) {
+        function createNextTetromino() {
             const nextTetromino = randomTetromino;
         
             nextTetromino.position.x = Math.floor(gameBoard[0].length / 2 - nextTetromino.shape[0].length / 2);
@@ -176,7 +176,7 @@ module.exports = {
             }
         }
         
-        function removeCompletedLines(tetromino) {
+        function removeCompletedLines() {
             for (let i = gameBoard.length - 1; i >= 0; i--) {
                 if (gameBoard[i].every(cell => cell!== 0)) {
                     gameBoard.splice(i, 1);
@@ -209,7 +209,7 @@ module.exports = {
         
         setInterval(updateTetrominoPosition, 5000);
 
-        const embedDescription = createGameBoardWithTetromino(gameBoard, randomTetromino, initialPosition, interval);
+        const embedDescription = createGameBoardWithTetromino(gameBoard, randomTetromino, initialPosition);
 
         await interaction.reply({embeds: [{ description: embedDescription, color: 0x0099FF }] });
     },
