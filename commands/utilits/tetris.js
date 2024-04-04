@@ -3,7 +3,6 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 module.exports = {
     data: new SlashCommandBuilder().setName('tetris').setDescription('Play a game of Tetris'),
     async execute(interaction) {
-        // Описание эмодзи для тетрамино
         const bE = ':white_large_square:';
         const aBe = ':orange_square:';
         const eSE = ':black_large_square:';
@@ -77,60 +76,138 @@ module.exports = {
         const randomTetrominoKey = tetrominoKeys[Math.floor(Math.random() * tetrominoKeys.length)];
         const randomTetromino = tetrominos[randomTetrominoKey];
 
-        const initialPosition = [0, 3]; // Начальные координаты тетрамино на игровом поле
-
-        // Функция для создания строки с игровым полем и тетрамино
+        const initialPosition = [0, 3];
         function createGameBoardWithTetromino(gameBoard, tetromino, position) {
             let result = '';
             for (let i = 0; i < gameBoard.length; i++) {
                 for (let j = 0; j < gameBoard[i].length; j++) {
-                    // Проверяем, содержит ли текущая ячейка тетрамино
                     if (i >= position[0] && i < position[0] + tetromino.length &&
                         j >= position[1] && j < position[1] + tetromino[0].length) {
-                        result += tetromino[i - position[0]][j - position[1]]; // Используем символ для тетрамино
+                        result += tetromino[i - position[0]][j - position[1]]; 
                     } else {
-                        result += gameBoard[i][j]; // Используем символ для игрового поля
+                        result += gameBoard[i][j]; 
                     }
                 }
-                result += '\n'; // Переход на новую строку
+                result += '\n'; 
             }
             return result;
         }
-        
-        let currentPosition = initialPosition;
 
-        function checkCollision(gameBoard, tetromino, position) {
-            for (let y = 0; y < tetromino.length; y++) {
-                for (let x = 0; x < tetromino[y].length; x++) {
-                    if (tetromino[y][x] && (gameBoard[position[1] + y] && gameBoard[position[1] + y][position[0] + x]) !== 0) {
-                        // Если позиция тетромино пересекается с занятыми ячейками на игровом поле, есть коллизия.
-                        return true;
+        function isCollision(tetromino) {
+            for (let i = 0; i < tetromino.shape.length; i++) {
+                for (let j = 0; j < tetromino.shape[i].length; j++) {
+                    if (tetromino.shape[i][j]!== 0) {
+                        if (gameBoard[tetromino.position.y + i][tetromino.position.x + j]!== 0) {
+                            return true; // Обнаружено пересечение
+                        }
                     }
                 }
             }
-            return false;
+            return false; // Нет пересечений
         }
-        
-        // Определяем скорость падения в миллисекундах (5 секунд)
-        const fallSpeed = 5000;
 
+
+        function endGame(tetromino) {
+            // Остановка игрового цикла или других процессов, связанных с игрой
+            clearInterval(gameLoop); // Пример остановки игрового цикла
         
-        function updateTetrominoPosition() {
-            currentPosition[0]++; // Увеличиваем позицию по вертикали
+            // Отображение сообщения об окончании игры
+            displayGameOverMessage(); // Пример отображения сообщения о поражении
+        }
+
+        function createNextTetromino(tetromino) {
+            const nextTetromino = randomTetromino;
         
-            // Проверяем не достигло ли тетромино нижней границы
-            if (!checkCollision(gameBoard, randomTetromino, currentPosition)) {
-                // Если нет коллизии, обновляем описание встроенного сообщения и отправляем его
-                const embedDescription = createGameBoardWithTetromino(gameBoard, randomTetromino, currentPosition);
-                interaction.editReply({ embeds: [{ description: embedDescription, color: 0x0099FF }] });
+            nextTetromino.position.x = Math.floor(gameBoard[0].length / 2 - nextTetromino.shape[0].length / 2);
+            nextTetromino.position.y = 0;
+        
+            if (isCollision(nextTetromino)) {
+                endGame(tetromino);
             } else {
-                // В противном случае останавливаем функцию, так как тетромино достигло нижней границы
-                clearInterval(interval); 
+                tetromino = nextTetromino;
             }
         }
 
-        // Вызываем функцию обновления позиции тетрамино с интервалом в 5 секунд
-        const interval = setInterval(updateTetrominoPosition, fallSpeed);
+        function placeTetrominoAtCurrentPosition(tetromino) {
+            for (let i = 0; i < tetromino.shape.length; i++) {
+                for (let j = 0; j < tetromino.shape[i].length; j++) {
+                    if (tetromino.shape[i][j]!== 0) {
+                        gameBoard[tetromino.position.y + i][tetromino.position.x + j] = tetromino.shape[i][j];
+                    }
+                }
+            }
+        }
+
+        function eraseTetrominoFromCurrentPosition(tetromino) {
+            for (let i = 0; i < tetromino.shape.length; i++) {
+                for (let j = 0; j < tetromino.shape[i].length; j++) {
+                    if (tetromino.shape[i][j]!== 0) {
+                        gameBoard[tetromino.position.y + i][tetromino.position.x + j] = 0;
+                    }
+                }
+            }
+        }
+
+        function canMoveTetrominoDown(tetromino, position) {
+            const bottomRow = tetromino.position.y + tetromino.shape.length;
+            if (bottomRow >= gameBoard.height) {
+                return false; 
+            }
+            for (let i = 0; i < tetromino.shape.length; i++) {
+                for (let j = 0; j < tetromino.shape[i].length; j++) {
+                    if (tetromino.shape[i][j]!== 0) {
+                        if (gameBoard.cells[tetromino.position.y + i + 1][tetromino.position.x + j]!== 0) {
+                            return false; 
+                        }
+                    }
+                }
+            }
+        
+            return true;
+        }
+                
+        function updateGameBoardWithTetromino(tetromino) {
+            for (let i = 0; i < tetromino.shape.length; i++) {
+                for (let j = 0; j < tetromino.shape[i].length; j++) {
+                    if (tetromino.shape[i][j]!== 0) {
+                        gameBoard[tetromino.position.y + i][tetromino.position.x + j] = tetromino.shape[i][j];
+                    }
+                }
+            }
+        }
+        
+        function removeCompletedLines(tetromino) {
+            for (let i = gameBoard.length - 1; i >= 0; i--) {
+                if (gameBoard[i].every(cell => cell!== 0)) {
+                    gameBoard.splice(i, 1);
+                    gameBoard.unshift(Array(gameBoard[0].length).fill(0));
+                }
+            }
+        }
+        
+        function fixateTetrominoOnGameBoard() {
+            updateGameBoardWithTetromino();
+            removeCompletedLines();
+            createNextTetromino();
+        }
+        
+
+
+        function moveTetrominoDown(tetromino) {
+            if (canMoveTetrominoDown()) {
+                eraseTetrominoFromCurrentPosition();
+                tetrominoPosition.y++;
+                placeTetrominoAtCurrentPosition();
+            } else {
+                fixateTetrominoOnGameBoard();
+            }
+        }
+        
+        function updateTetrominoPosition() {
+            moveTetrominoDown();
+        }
+        
+        setInterval(updateTetrominoPosition, 5000);
 
         const embedDescription = createGameBoardWithTetromino(gameBoard, randomTetromino, initialPosition, interval);
 
