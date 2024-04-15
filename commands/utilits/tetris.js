@@ -1,9 +1,32 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, Client, GatewayIntentBits} = require('discord.js');
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+
 
 module.exports = {
     data: new SlashCommandBuilder().setName('tetris').setDescription('Play a game of Tetris'),
     async execute(interaction) {
-        const bE = ':white_large_square:';
+
+      const left = new ButtonBuilder()
+        .setCustomId('left')
+        .setEmoji('<:arrow4:1211025846609911890>')
+        .setStyle(ButtonStyle.Primary);
+
+      const rotate = new ButtonBuilder()
+        .setCustomId('rotate')
+        .setEmoji('<:arrow1:1226967622499700858>')
+        .setStyle(ButtonStyle.Primary);  
+
+      const right = new ButtonBuilder()
+        .setCustomId('right')
+        .setEmoji('<:arrow3:1211020585799516180>')
+        .setStyle(ButtonStyle.Primary);
+          
+      const row = new ActionRowBuilder()
+        .addComponents(left, rotate, right);
+      
+      await interaction.reply({content:'Начинаем игру в тетрис' , components: [row]})
+  
         const aBe = ':orange_square:';
         const eSE = ':black_large_square:';
 
@@ -32,21 +55,19 @@ module.exports = {
         const tetrominos = {
             'I' : [
                 [eSE, eSE, eSE, eSE],
+                [eSE, eSE, eSE, eSE],
+                [eSE, eSE, eSE, eSE],
                 [aBe, aBe, aBe, aBe],
-                [eSE, eSE, eSE, eSE],
-                [eSE, eSE, eSE, eSE],
             ],
-
             'L' : [
+                [eSE, eSE, eSE],
                 [eSE, eSE, aBe],
                 [aBe, aBe, aBe],
-                [eSE, eSE, eSE],
             ],
-
             'J' : [
+                [eSE, eSE, eSE],
                 [aBe, eSE, eSE],
                 [aBe, aBe, aBe],
-                [eSE, eSE, eSE],
             ],
             'O': [
                 [aBe,aBe],
@@ -54,29 +75,75 @@ module.exports = {
               ],
 
             'S' : [
+                [eSE, eSE, eSE],
                 [eSE, aBe, aBe],
                 [aBe, aBe, eSE],
-                [eSE, eSE, eSE],
             ],
 
             'Z' : [
+                [eSE, eSE, eSE],
                 [aBe, aBe, eSE],
                 [eSE, aBe, aBe],
-                [eSE, eSE, eSE],
             ],
 
             'T' : [
+                [eSE, eSE, eSE],
                 [eSE, aBe, eSE],
                 [aBe, aBe, aBe],
-                [eSE, eSE, eSE],
             ]
+
         };
 
-        const tetrominoKeys = Object.keys(tetrominos);
-        const randomTetrominoKey = tetrominoKeys[Math.floor(Math.random() * tetrominoKeys.length)];
-        const randomTetromino = tetrominos[randomTetrominoKey];
+        function moveRight(currentPosition) {
+          currentPosition[1]++; // Увеличиваем индекс столбца на 1
+          const embedDescription = createGameBoardWithTetromino(gameBoard, tetromino, currentPosition);
+          // Обновляем сообщение
+          interaction.editReply({embeds: [{ description: embedDescription, color: 0x0099FF }] });
+      }
+    
 
-        const initialPosition = [0, 3];
+        // Добавленная функция canMoveDown
+        function canMoveDown(currentPosition, tetromino, gameBoard) {
+          const tetrominoHeight = tetromino.length;
+          const tetrominoWidth = tetromino[0].length;
+
+          // Проверяем, не достигло ли тетромино нижней границы игрового поля
+          if (currentPosition[0] + tetrominoHeight >= gameBoard.length) {
+            return false; // Тетромино не может двигаться вниз
+          }
+
+          // Проверяем, есть ли препятствия под тетромино
+          for (let i = 0; i < tetrominoHeight; i++) {
+            for (let j = 0; j < tetrominoWidth; j++) {
+              if (tetromino[i][j]!== eSE &&
+                gameBoard[currentPosition[0] + i + 1][currentPosition[1] + j]!== eSE) {
+                return false; // Тетромино не может двигаться вниз
+              }
+            }
+          }
+
+          return true; // Тетромино может двигаться вниз
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+          }
+  
+
+        // Функция для падения тетромино вниз
+        async function moveTetrominoDown(currentPosition, tetromino, gameBoard) {
+          while (canMoveDown(currentPosition, tetromino, gameBoard)) {
+            currentPosition[0]++; // Смещаем тетромино вниз
+            const embedDescription = createGameBoardWithTetromino(gameBoard, tetromino, currentPosition);
+            await interaction.editReply({embeds: [{ description: embedDescription, color: 0x0099FF }] });
+            await delay(1000); // Задержка в 1 секунду (вы можете настроить скорость падения)
+          }
+          // Если тетромино больше не может двигаться вниз, фиксируем его позицию на игровом поле
+          placeTetrominoOnBoard(currentPosition, tetromino, gameBoard);
+          // Здесь также можно добавить логику проверки заполненных линий и их удаления
+        }
+
+
         function createGameBoardWithTetromino(gameBoard, tetromino, position) {
             let result = '';
             for (let i = 0; i < gameBoard.length; i++) {
@@ -93,124 +160,33 @@ module.exports = {
             return result;
         }
 
-        function isCollision(tetromino) {
-            for (let i = 0; i < tetromino.shape.length; i++) {
-                for (let j = 0; j < tetromino.shape[i].length; j++) {
-                    if (tetromino.shape[i][j]!== 0) {
-                        if (gameBoard[tetromino.position.y + i][tetromino.position.x + j]!== 0) {
-                            return true;
-                        }
-                    }
+
+        function placeTetrominoOnBoard(position, tetromino, gameBoard) {
+            const tetrominoHeight = tetromino.length;
+            const tetrominoWidth = tetromino[0].length;
+          
+            for (let i = 0; i < tetrominoHeight; i++) {
+              for (let j = 0; j < tetrominoWidth; j++) {
+                if (tetromino[i][j]!== eSE) {
+                  gameBoard[position[0] + i][position[1] + j] = tetromino[i][j];
                 }
+              }
             }
-            return false; 
-        }
+          }
 
-
-        function endGame(tetromino) {
-            // Остановка игрового цикла или других процессов, связанных с игрой
-            clearInterval(gameLoop); // Пример остановки игрового цикла
         
-            // Отображение сообщения об окончании игры
-            displayGameOverMessage(); // Пример отображения сообщения о поражении
+          
+        function getRandomTetrominoKey(tetrominos) {
+            const tetrominoKeys = Object.keys(tetrominos);
+            const randomIndex = Math.floor(Math.random() * tetrominoKeys.length);
+            return tetrominoKeys[randomIndex];
         }
-
-        function createNextTetromino() {
-            const nextTetromino = randomTetromino;
-        
-            nextTetromino.position.x = Math.floor(gameBoard[0].length / 2 - nextTetromino.shape[0].length / 2);
-            nextTetromino.position.y = 0;
-        
-            if (isCollision(nextTetromino)) {
-                endGame(tetromino);
-            } else {
-                tetromino = nextTetromino;
-            }
-        }
-
-        function placeTetrominoAtCurrentPosition(tetromino) {
-            for (let i = 0; i < tetromino.shape.length; i++) {
-                for (let j = 0; j < tetromino.shape[i].length; j++) {
-                    if (tetromino.shape[i][j]!== 0) {
-                        gameBoard[tetromino.position.y + i][tetromino.position.x + j] = tetromino.shape[i][j];
-                    }
-                }
-            }
-        }
-
-        function eraseTetrominoFromCurrentPosition(tetromino) {
-            for (let i = 0; i < tetromino.shape.length; i++) {
-                for (let j = 0; j < tetromino.shape[i].length; j++) {
-                    if (tetromino.shape[i][j]!== 0) {
-                        gameBoard[tetromino.position.y + i][tetromino.position.x + j] = 0;
-                    }
-                }
-            }
-        }
-
-        function canMoveTetrominoDown(tetromino, position) {
-            const bottomRow = tetromino.position.y + tetromino.shape.length;
-            if (bottomRow >= gameBoard.height) {
-                return false; 
-            }
-            for (let i = 0; i < tetromino.shape.length; i++) {
-                for (let j = 0; j < tetromino.shape[i].length; j++) {
-                    if (tetromino.shape[i][j]!== 0) {
-                        if (gameBoard.cells[tetromino.position.y + i + 1][tetromino.position.x + j]!== 0) {
-                            return false; 
-                        }
-                    }
-                }
-            }
-        
-            return true;
-        }
-                
-        function updateGameBoardWithTetromino(tetromino) {
-            for (let i = 0; i < tetromino.shape.length; i++) {
-                for (let j = 0; j < tetromino.shape[i].length; j++) {
-                    if (tetromino.shape[i][j]!== 0) {
-                        gameBoard[tetromino.position.y + i][tetromino.position.x + j] = tetromino.shape[i][j];
-                    }
-                }
-            }
-        }
-        
-        function removeCompletedLines() {
-            for (let i = gameBoard.length - 1; i >= 0; i--) {
-                if (gameBoard[i].every(cell => cell!== 0)) {
-                    gameBoard.splice(i, 1);
-                    gameBoard.unshift(Array(gameBoard[0].length).fill(0));
-                }
-            }
-        }
-        
-        function fixateTetrominoOnGameBoard() {
-            updateGameBoardWithTetromino();
-            removeCompletedLines();
-            createNextTetromino();
-        }
-        
-
-
-        function moveTetrominoDown(tetromino) {
-            if (canMoveTetrominoDown()) {
-                eraseTetrominoFromCurrentPosition();
-                tetrominoPosition.y++;
-                placeTetrominoAtCurrentPosition();
-            } else {
-                fixateTetrominoOnGameBoard();
-            }
-        }
-        
-        function updateTetrominoPosition() {
-            moveTetrominoDown();
-        }
-        
-        setInterval(updateTetrominoPosition, 5000);
-
-        const embedDescription = createGameBoardWithTetromino(gameBoard, randomTetromino, initialPosition);
-
-        await interaction.reply({embeds: [{ description: embedDescription, color: 0x0099FF }] });
+          
+        // Вызываем функцию для падения тетромино
+        const tetrominoKey = getRandomTetrominoKey(tetrominos);
+        const tetromino = tetrominos[tetrominoKey];
+        const initialPosition = [0, 3];
+        moveTetrominoDown(initialPosition, tetromino, gameBoard);
+        await moveRight(initialPosition, tetromino, gameBoard);
     },
 };
