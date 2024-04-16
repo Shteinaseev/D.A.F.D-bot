@@ -174,7 +174,14 @@ module.exports = {
             }
           }
 
-        
+        client.on('interactionCreate', async interaction => {
+          if (!interaction.isButton()) return;
+          if (interaction.customId === 'right') {
+            moveRight();
+            console.log('нажата кнопка right')
+            await interaction.reply('Функция moveRight активирована!');
+          }
+        });  
           
         function getRandomTetrominoKey(tetrominos) {
             const tetrominoKeys = Object.keys(tetrominos);
@@ -187,6 +194,5 @@ module.exports = {
         const tetromino = tetrominos[tetrominoKey];
         const initialPosition = [0, 3];
         moveTetrominoDown(initialPosition, tetromino, gameBoard);
-        await moveRight(initialPosition, tetromino, gameBoard);
     },
 };
