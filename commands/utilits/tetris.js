@@ -174,15 +174,16 @@ module.exports = {
             }
           }
 
-        client.on('interactionCreate', async interaction => {
-          if (!interaction.isButton()) return;
-          if (interaction.customId === 'right') {
-            moveRight();
-            console.log('нажата кнопка right')
-            await interaction.deferUpdate();
-            await interaction.editReply('Функция moveRight активирована!');
-          }
-        });  
+          client.on('interactionCreate', async interaction => {
+            if (!interaction.isButton()) return;       
+            if (interaction.customId === 'right') {
+                moveRight();
+                await interaction.deferUpdate();
+                const updatedEmbed = interaction.message.embeds[0];
+                updatedEmbed.setDescription('Функция moveRight активирована!');
+                await interaction.message.edit({ embeds: [updatedEmbed], components: [] });
+            }
+          });
           
         function getRandomTetrominoKey(tetrominos) {
             const tetrominoKeys = Object.keys(tetrominos);
