@@ -179,7 +179,8 @@ module.exports = {
           if (interaction.customId === 'right') {
             moveRight();
             console.log('нажата кнопка right')
-            await interaction.reply('Функция moveRight активирована!');
+            await interaction.deferUpdate();
+            await interaction.editReply('Функция moveRight активирована!');
           }
         });  
           
