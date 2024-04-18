@@ -1,7 +1,5 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, Client, GatewayIntentBits} = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, Client, GatewayIntentBits, Message} = require('discord.js');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-
-
 
 module.exports = {
     data: new SlashCommandBuilder().setName('tetris').setDescription('Play a game of Tetris'),
@@ -26,7 +24,8 @@ module.exports = {
         .addComponents(left, rotate, right);
       
       await interaction.reply({content:'Начинаем игру в тетрис' , components: [row]})
-  
+      
+
         const aBe = ':orange_square:';
         const eSE = ':black_large_square:';
 
@@ -51,7 +50,6 @@ module.exports = {
             [eSE, eSE, eSE, eSE, eSE, eSE, eSE, eSE, eSE, eSE],
             [eSE, eSE, eSE, eSE, eSE, eSE, eSE, eSE, eSE, eSE]
         ];
-
         const tetrominos = {
             'I' : [
                 [eSE, eSE, eSE, eSE],
@@ -97,24 +95,26 @@ module.exports = {
         function moveRight(currentPosition) {
           currentPosition[1]++; // Увеличиваем индекс столбца на 1
           const embedDescription = createGameBoardWithTetromino(gameBoard, tetromino, currentPosition);
-          // Обновляем сообщение
           interaction.editReply({embeds: [{ description: embedDescription, color: 0x0099FF }] });
-      }
-    
+       }
+        const filter = i => i.customId === 'right' && i.user.id === message.author.id;
+        const collector = message.channel.createMessageComponentCollector({ filter, time: 15000 });
+        collector.on('collect', async i => {
+          moveRight(); 
+      });
 
-        // Добавленная функция canMoveDown
+    
         function canMoveDown(currentPosition, tetromino, gameBoard) {
           const tetrominoHeight = tetromino.length;
           const tetrominoWidth = tetromino[0].length;
 
-          // Проверяем, не достигло ли тетромино нижней границы игрового поля
           if (currentPosition[0] + tetrominoHeight >= gameBoard.length) {
             return false; // Тетромино не может двигаться вниз
           }
 
           // Проверяем, есть ли препятствия под тетромино
           for (let i = 0; i < tetrominoHeight; i++) {
-            for (let j = 0; j < tetrominoWidth; j++) {
+            for (let j = 0; j < tetrominoWidth; j++) {    
               if (tetromino[i][j]!== eSE &&
                 gameBoard[currentPosition[0] + i + 1][currentPosition[1] + j]!== eSE) {
                 return false; // Тетромино не может двигаться вниз
@@ -174,24 +174,12 @@ module.exports = {
             }
           }
 
-          client.on('interactionCreate', async interaction => {
-            if (!interaction.isButton()) return;       
-            if (interaction.customId === 'right') {
-                moveRight();
-                await interaction.deferUpdate();
-                const updatedEmbed = interaction.message.embeds[0];
-                updatedEmbed.setDescription('Функция moveRight активирована!');
-                await interaction.message.edit({ embeds: [updatedEmbed], components: [] });
-            }
-          });
-          
         function getRandomTetrominoKey(tetrominos) {
             const tetrominoKeys = Object.keys(tetrominos);
             const randomIndex = Math.floor(Math.random() * tetrominoKeys.length);
-            return tetrominoKeys[randomIndex];
+            return tetrominoKeys[randomIndex];  
         }
           
-        // Вызываем функцию для падения тетромино
         const tetrominoKey = getRandomTetrominoKey(tetrominos);
         const tetromino = tetrominos[tetrominoKey];
         const initialPosition = [0, 3];
