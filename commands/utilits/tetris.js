@@ -16,7 +16,7 @@ module.exports = {
         .setStyle(ButtonStyle.Primary);  
 
       const right = new ButtonBuilder()
-        .setCustomId('right')
+        .setCustomId('right1')
         .setEmoji('<:arrow3:1211020585799516180>')
         .setStyle(ButtonStyle.Primary);
           
@@ -96,13 +96,17 @@ module.exports = {
           currentPosition[1]++; // Увеличиваем индекс столбца на 1
           const embedDescription = createGameBoardWithTetromino(gameBoard, tetromino, currentPosition);
           interaction.editReply({embeds: [{ description: embedDescription, color: 0x0099FF }] });
-       }
-        const filter = i => i.customId === 'right' && i.user.id === message.author.id;
-        const collector = message.channel.createMessageComponentCollector({ filter, time: 15000 });
-        collector.on('collect', async i => {
-          moveRight(); 
-      });
+       } 
 
+       client.on('interactionCreate', async (interaction) => {
+        if (!interaction.isButton()) return;
+    
+        if (interaction.customId === 'right1') {
+            await moveRight()
+            await interaction.editReplyreply({embeds: [{ description: embedDescription, color: 0x0099FF }] });
+        }
+      });
+    
     
         function canMoveDown(currentPosition, tetromino, gameBoard) {
           const tetrominoHeight = tetromino.length;
