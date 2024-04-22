@@ -190,4 +190,4 @@ module.exports = {
     },
 };
 
-client.login('MTIyMTQ0NTI4MzQ4MTkxNTQ3Mw.GiL6IA.nipXn7G5CGnPnS217L3-rdsqYeIPy_eE748uBM');
+client.login('token');
