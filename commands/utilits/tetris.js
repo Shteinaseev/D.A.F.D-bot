@@ -24,19 +24,15 @@ module.exports = {
         .addComponents(left, rotate, right);
       
       await interaction.reply({content:'Начинаем игру в тетрис' , components: [row]})
-      
+
       client.on('interactionCreate', async interaction => {
         if (!interaction.isButton()) return;
-
-        if (interaction.customId === 'rotate') {
-          moveRight();
-          await interaction.deferUpdate();
-          const updatedEmbed = interaction.message.embeds[0];
-          updatedEmbed.setDescription('Функция moveRight активирована!');
-          await interaction.message.edit({ embeds: [updatedEmbed], components: [row] });
+    
+        if (interaction.customId === 'right') {
+          moveRight(initialPosition, tetromino, gameBoard);
         }
-      });
-
+    });
+    
         const aBe = ':orange_square:';
         const eSE = ':black_large_square:';
 
@@ -103,10 +99,12 @@ module.exports = {
 
         };
 
-        function moveRight(currentPosition) {
+        function moveRight(currentPosition, tetromino, gameBoard) {
+          while (canMoveDown(currentPosition, tetromino, gameBoard)) {
           currentPosition[1]++; // Увеличиваем индекс столбца на 1
           const embedDescription = createGameBoardWithTetromino(gameBoard, tetromino, currentPosition);
           interaction.editReply({embeds: [{ description: embedDescription, color: 0x0099FF }] });
+          }
         } 
      
         function canMoveDown(currentPosition, tetromino, gameBoard) {
@@ -192,3 +190,4 @@ module.exports = {
     },
 };
 
+client.login('MTIyMTQ0NTI4MzQ4MTkxNTQ3Mw.GiL6IA.nipXn7G5CGnPnS217L3-rdsqYeIPy_eE748uBM');
