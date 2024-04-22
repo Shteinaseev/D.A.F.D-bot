@@ -16,7 +16,7 @@ module.exports = {
         .setStyle(ButtonStyle.Primary);  
 
       const right = new ButtonBuilder()
-        .setCustomId('right1')
+        .setCustomId('right')
         .setEmoji('<:arrow3:1211020585799516180>')
         .setStyle(ButtonStyle.Primary);
           
@@ -25,6 +25,17 @@ module.exports = {
       
       await interaction.reply({content:'Начинаем игру в тетрис' , components: [row]})
       
+      client.on('interactionCreate', async interaction => {
+        if (!interaction.isButton()) return;
+
+        if (interaction.customId === 'rotate') {
+          moveRight();
+          await interaction.deferUpdate();
+          const updatedEmbed = interaction.message.embeds[0];
+          updatedEmbed.setDescription('Функция moveRight активирована!');
+          await interaction.message.edit({ embeds: [updatedEmbed], components: [row] });
+        }
+      });
 
         const aBe = ':orange_square:';
         const eSE = ':black_large_square:';
@@ -96,18 +107,8 @@ module.exports = {
           currentPosition[1]++; // Увеличиваем индекс столбца на 1
           const embedDescription = createGameBoardWithTetromino(gameBoard, tetromino, currentPosition);
           interaction.editReply({embeds: [{ description: embedDescription, color: 0x0099FF }] });
-       } 
-
-       client.on('interactionCreate', async (interaction) => {
-        if (!interaction.isButton()) return;
-    
-        if (interaction.customId === 'right1') {
-            await moveRight()
-            await interaction.editReplyreply({embeds: [{ description: embedDescription, color: 0x0099FF }] });
-        }
-      });
-    
-    
+        } 
+     
         function canMoveDown(currentPosition, tetromino, gameBoard) {
           const tetrominoHeight = tetromino.length;
           const tetrominoWidth = tetromino[0].length;
@@ -190,3 +191,4 @@ module.exports = {
         moveTetrominoDown(initialPosition, tetromino, gameBoard);
     },
 };
+
