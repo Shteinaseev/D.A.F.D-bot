@@ -196,9 +196,8 @@ module.exports = {
           
         const tetrominoKey = getRandomTetrominoKey(tetrominos);
         const tetromino = tetrominos[tetrominoKey];
-        const initialPosition = [0, 5];
+        const initialPosition = [-2, 3];
         moveTetrominoDown(initialPosition, tetromino, gameBoard);
 
     },
 };
-
