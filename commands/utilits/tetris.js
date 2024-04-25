@@ -22,21 +22,20 @@ module.exports = {
       const row = new ActionRowBuilder()
         .addComponents(left, rotate, right);
       
-      const message = await interaction.reply({content:'Начинаем игру в тетрис' , components: [row]})
+        const message = await interaction.reply({ content: 'Начинаем игру в тетрис', components: [row] });
 
-
-      const filter = (button) => button.user.id === interaction.user.id;
-
-      const collector = message.createMessageComponentCollector({ filter, time: 15000 });
-
-      collector.on('collect', async (button) => {
-        if (button.customId === 'right') {
-          moveRight(initialPosition, tetromino, gameBoard);
-        }
-      });
-
-    collector.on('end',(collected) => console.log(`Collected ${collected.size} interactions.`));
-
+        const filter = (button) => button.user.id === interaction.user.id;
+        const collector = message.createMessageComponentCollector({ filter, time: 15000 });
+    
+        collector.on('collect', async (button) => {
+          if (button.customId === 'right') {
+              moveRight(initialPosition, tetromino, gameBoard, interaction);
+          } else if (button.customId === 'left') {
+              moveLeft(initialPosition, tetromino, gameBoard, interaction);
+          }
+        });
+      
+        collector.on('end', (collected) => console.log(`Collected ${collected.size} interactions.`));
     
         const aBe = ':blue_square:';
         const eSE = ':black_large_square:';
@@ -104,17 +103,17 @@ module.exports = {
 
         };
 
-        function moveRight(currentPosition, tetromino, gameBoard) {
+        async function moveRight(currentPosition, tetromino, gameBoard, interaction) {
           currentPosition[1]++; // Увеличиваем индекс столбца на 1
           const embedDescription = createGameBoardWithTetromino(gameBoard, tetromino, currentPosition);
-          interaction.editReply({embeds: [{ description: embedDescription, color: 0x0099FF }] });
+          await interaction.editReply({embeds: [{ description: embedDescription, color: 0x0099FF }] });
         } 
      
 
-        function moveLeft(currentPosition, tetromino, gameBoard) {
+        async function moveLeft(currentPosition, tetromino, gameBoard, interaction) {
           currentPosition[1]--;
           const embedDescription = createGameBoardWithTetromino(gameBoard, tetromino, currentPosition);
-          interaction.editReply({embeds: [{ description: embedDescription, color: 0x0099FF }] });
+          await interaction.editReply({embeds: [{ description: embedDescription, color: 0x0099FF }] });
         } 
 
 
@@ -145,7 +144,7 @@ module.exports = {
   
 
         // Функция для падения тетромино вниз
-        async function moveTetrominoDown(currentPosition, tetromino, gameBoard) {
+        async function moveTetrominoDown(currentPosition, tetromino, gameBoard, interaction) {
           while (canMoveDown(currentPosition, tetromino, gameBoard)) {
             currentPosition[0]++; // Смещаем тетромино вниз
             const embedDescription = createGameBoardWithTetromino(gameBoard, tetromino, currentPosition);
@@ -197,7 +196,7 @@ module.exports = {
         const tetrominoKey = getRandomTetrominoKey(tetrominos);
         const tetromino = tetrominos[tetrominoKey];
         const initialPosition = [-2, 3];
-        moveTetrominoDown(initialPosition, tetromino, gameBoard);
+        moveTetrominoDown(initialPosition, tetromino, gameBoard, interaction);
 
     },
 };
