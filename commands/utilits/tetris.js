@@ -108,7 +108,7 @@ module.exports = {
         };
 
         async function moveRight(currentPosition, tetromino, gameBoard, button) {
-          currentPosition[1]++; // Увеличиваем индекс столбца на 1
+          currentPosition[1]++; 
           const embedDescription = createGameBoardWithTetromino(gameBoard, tetromino, currentPosition);
           await button.update({embeds: [{ description: embedDescription, color: 0x0099FF }] });
         } 
@@ -148,7 +148,7 @@ module.exports = {
           const tetrominoWidth = tetromino[0].length;
 
           if (currentPosition[0] + tetrominoHeight >= gameBoard.length) {
-            return false; // Тетромино не может двигаться вниз
+            return false;
           }
 
           // Проверяем, есть ли препятствия под тетромино
@@ -156,20 +156,18 @@ module.exports = {
             for (let j = 0; j < tetrominoWidth; j++) {    
               if (tetromino[i][j]!== eSE &&
                 gameBoard[currentPosition[0] + i + 1][currentPosition[1] + j]!== eSE) {
-                return false; // Тетромино не может двигаться вниз
+                return false; 
               }
             }
           }
 
-          return true; // Тетромино может двигаться вниз
+          return true; 
         }
 
         function delay(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
           }
-  
 
-        // Функция для падения тетромино вниз
         async function moveTetrominoDown(currentPosition, tetromino, gameBoard, interaction) {
           while (canMoveDown(currentPosition, tetromino, gameBoard)) {
             currentPosition[0]++; // Смещаем тетромино вниз
@@ -177,7 +175,6 @@ module.exports = {
             await interaction.editReply({embeds: [{ description: embedDescription, color: 0x0099FF }] });
             await delay(800); // Задержка в 1 се кунду 
           }
-          // Если тетромино больше не может двигаться вниз, фиксируем его позицию на игровом поле
           placeTetrominoOnBoard(currentPosition, tetromino, gameBoard);
         }
 
