@@ -35,7 +35,7 @@ module.exports = {
               moveLeft(initialPosition, tetromino, gameBoard, button);
             }
             else if (button.customId === 'rotate') {
-              tetromino = await rotateTetromino(tetromino, gameBoard, button);
+              Object.assign(tetromino, await rotateTetromino(tetromino, gameBoard, button));
           }
         });
   
@@ -142,7 +142,7 @@ module.exports = {
     
         return rotatedMatrix;
     }
-
+    
         function canMoveDown(currentPosition, tetromino, gameBoard) {
           const tetrominoHeight = tetromino.length;
           const tetrominoWidth = tetromino[0].length;
@@ -154,8 +154,9 @@ module.exports = {
           // Проверяем, есть ли препятствия под тетромино
           for (let i = 0; i < tetrominoHeight; i++) {
             for (let j = 0; j < tetrominoWidth; j++) {    
-              if (tetromino[i][j]!== eSE &&
-                gameBoard[currentPosition[0] + i + 1][currentPosition[1] + j]!== eSE) {
+              if (i >= 0 && i < tetrominoHeight && j >= 0 && j < tetrominoWidth &&
+                tetromino[i][j] !== eSE &&
+                gameBoard[currentPosition[0] + i + 1][currentPosition[1] + j] !== eSE) {
                 return false; 
               }
             }
@@ -168,7 +169,7 @@ module.exports = {
             return new Promise(resolve => setTimeout(resolve, ms));
           }
 
-        async function moveTetrominoDown(currentPosition, tetromino, gameBoard, interaction) {
+        async function moveTetrominoDown(currentPosition, gameBoard, interaction) {
           while (canMoveDown(currentPosition, tetromino, gameBoard)) {
             currentPosition[0]++; // Смещаем тетромино вниз
             const embedDescription = createGameBoardWithTetromino(gameBoard, tetromino, currentPosition);
@@ -176,8 +177,29 @@ module.exports = {
             await delay(800); // Задержка в 1 се кунду 
           }
           placeTetrominoOnBoard(currentPosition, tetromino, gameBoard);
+      
+
+          // tetrominoKey = getRandomTetrominoKey(tetrominos);
+          // currentTetromino = Object.assign([], tetrominos[tetrominoKey]);
+          // currentPosition = [-2, 3];        
+          // await moveTetrominoDown(currentTetromino, currentPosition, gameBoard, interaction);
         }
 
+        async function moveTetrominoDownAndContinue(currentPosition, gameBoard, interaction) {
+          // Проверяем, можно ли продолжить падение тетромино
+          while (canMoveDown(currentPosition, tetromino, gameBoard)) {
+            currentPosition[0]++; // Смещаем тетромино вниз
+            const embedDescription = createGameBoardWithTetromino(gameBoard, tetromino, currentPosition);
+            await interaction.editReply({embeds: [{ description: embedDescription, color: 0x0099FF }] });
+            await delay(800); // Задержка в 1 секунду 
+          }
+          // Когда тетромино достигло конечной позиции, выбираем новое тетромино и продолжаем
+          let newTetrominoKey = getRandomTetrominoKey(tetrominos);
+          tetromino = Object.assign([], tetrominos[newTetrominoKey]);
+          const newInitialPosition = [-2, 3];
+          moveTetrominoDown(newInitialPosition, gameBoard, interaction);
+        }
+        
 
         function createGameBoardWithTetromino(gameBoard, tetromino, position) {
             let result = '';
@@ -216,10 +238,8 @@ module.exports = {
         }
 
         let tetrominoKey = getRandomTetrominoKey(tetrominos);
-        let tetromino = tetrominos[tetrominoKey];
+        let tetromino = Object.assign([], tetrominos[tetrominoKey]);
         const initialPosition = [-2, 3];
-        moveTetrominoDown(initialPosition, tetromino, gameBoard, interaction);
-
+        moveTetrominoDownAndContinue(initialPosition, gameBoard, interaction);
     },
 };
-
